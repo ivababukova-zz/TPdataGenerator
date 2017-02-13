@@ -2,3 +2,4 @@
 ["destinations", "SOF", "KTW"]
 ["home point", "GLA"]
 ["T", 10]
+["instanceName", "instances/test"]

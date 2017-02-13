@@ -8,6 +8,7 @@ airports = []
 dests = []
 hpt = ""
 T = 0
+instanceFile = ""
 
 # from which date do I take T to start?
 
@@ -29,11 +30,7 @@ def calculateDuration(stamp1, stamp2):
     return round(durationFrac, 2)
 
 def parseConfig():
-    global airports, dests, hpt, T
-    airports = ["SOF", "AMS", "GLA", "KTW", "WAW", "EDI", "MAN"]
-    dests = ["SOF", "KTW"]
-    hpt = "GLA"
-    T = 10
+    global airports, dests, hpt, T, instanceFile
     with open("instanceConfig", "r") as f:
         for line in f:
             conf = json.loads(line)
@@ -45,6 +42,26 @@ def parseConfig():
                 hpt = conf[1]
             elif conf[0] == "T":
                 T = float(conf[1])
+            elif conf[0] == "instanceName":
+                instanceFile = conf[1]
+
+def generateA():
+    A = []
+    global airports, dests, hpt
+    with open("airports_out", "r") as f:
+        for line in f:
+            airport = json.loads(line)
+            purpose = ""
+            if airport[0] == hpt:
+                purpose = "home_point"
+            elif airport[0] in dests:
+                purpose = "destination"
+            elif airport[0] in airports:
+                purpose = "connecting"
+            if purpose != "":
+                airport.append(purpose)
+                A.append(airport)
+    return A
 
 def generateF():
     global airports, dests, hpt, T
@@ -52,6 +69,7 @@ def generateF():
         currentDate = 0
         earliestStamp = 0
         F = []
+        idnumb = 1
         for line in f:
             flight = json.loads(line)
             if flight[2] in airports and flight[3] in airports:
@@ -60,9 +78,21 @@ def generateF():
                 currentDate = calculateDuration(earliestStamp, flight[0])
                 if currentDate + flight[1] <= T:
                     flight[0] = currentDate
+                    flight.insert(0, idnumb)
                     F.append(flight)
+                    idnumb += 1
                 else:
                     break
+    return F
 
 parseConfig()
-generateF()
+F = generateF()
+A = generateA()
+
+with open(instanceFile, "w") as f:
+    for airport in A:
+        json.dump(airport, f)
+        f.write("\n")
+    for flight in F:
+        json.dump(flight, f)
+        f.write("\n")
