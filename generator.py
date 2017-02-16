@@ -75,7 +75,10 @@ def generateA():
         while len(connecting) < n:
             i = random.randint(0, len(A) - 1)
             f1.write(str(i) + "\n")
-            connecting.append(A.pop(i))
+            a = A.pop(i)
+            if a[1] == "1":
+                a[1] = "0.2" # if no conn time was calculated, put default
+            connecting.append(a)
         f1.write("randomly chosen destinations:\n")
         # choose d destinations from the airports:
         while len(dests) < d:
