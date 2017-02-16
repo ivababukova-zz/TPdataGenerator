@@ -47,12 +47,6 @@ def parseConfig():
             elif conf[0] == "T":
                 T = float(conf[1])
 
-def generateHC1():
-    pass
-
-def generateHC2():
-    pass
-
 def constructAirports(connecting, dests, hpt):
     global airports
     for a in connecting:
@@ -97,22 +91,20 @@ def generateA():
 
 def generateF():
     global airports, T, fFile
+    airport_codes = [item[0] for item in airports]
     with open("flightsCorpus", "r") as f:
         currentDate = 0
         earliestStamp = 0
         F = []
-        with open(fFile, "w") as f1:
-            for line in f:
-                flight = json.loads(line)
-                if flight[2] in airports and flight[3] in airports:
-                    if earliestStamp == 0:
-                        earliestStamp = flight[0]
-                    currentDate = calculateDuration(earliestStamp, flight[0])
-                    if currentDate + flight[1] <= T:
-                        flight[0] = currentDate
-                        F.append(flight)
-                        json.dump(flight, f1)
-                        f1.write("\n")
+        for line in f:
+            flight = json.loads(line)
+            if flight[2] in airport_codes and flight[3] in airport_codes:
+                if earliestStamp == 0:
+                    earliestStamp = flight[0]
+                currentDate = calculateDuration(earliestStamp, flight[0])
+                if currentDate + flight[1] <= T:
+                    flight[0] = currentDate
+                    F.append(flight)
     return F
 
 def takeFromFrandomM():
@@ -120,7 +112,7 @@ def takeFromFrandomM():
     counter = 0
     F = generateF()
     with open(fFile, "w") as f1, open(instanceFile, "a") as f2:
-        f1.write("flights random numbers:\n")
+        f1.write("randomly chosen flights:\n")
         while counter < m and len(F) > 0:
             i = random.randint(0, len(F) - 1)
             f1.write(str(i) + "\n")
