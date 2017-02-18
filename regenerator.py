@@ -12,19 +12,7 @@ import pprint
 
 pp = pprint.PrettyPrinter(indent=4)
 
-instanceName = sys.argv[1]
-
-fcorpus = "flightsCorpus"
-allairports = "airports_out"
-props = instanceName + "_props"
-regFile = instanceName + "_re"
-m = 0
-n = 0
-d = 0
-T = 0
-
 def getBasicParams():
-    global m, n, d, T
     with open(props, "r") as f:
         for line in f.readlines():
             line = line.split()
@@ -37,6 +25,7 @@ def getBasicParams():
                     d = int(line[1])
                 elif line[0] == "flights":
                     m = int(line[1])
+    return(m, n, d, T)
 
 def hms_to_seconds(t):
     t = t.split(",")
@@ -144,6 +133,14 @@ def takeFromF():
                 json.dump(flight, f2)
                 f2.write("\n")
 
-getBasicParams()
+instanceName = sys.argv[1]
+
+fcorpus = "flightsCorpus"
+allairports = "airports_out"
+props = instanceName + "_props"
+regFile = instanceName + "_re"
+
+(m, n, d, T) = getBasicParams()
+
 A = regenerateA()
 takeFromF()

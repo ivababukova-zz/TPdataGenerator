@@ -5,14 +5,6 @@ import random
 
 pp = pprint.PrettyPrinter(indent=4)
 
-airports = []
-instanceFile = "instances/"
-propsFile = ""
-T = 0
-m = 0
-n = 0
-d = 0
-
 # from which date do I take T to start? Implement when there is more data
 
 def hms_to_seconds(t):
@@ -33,7 +25,6 @@ def calculateDuration(stamp1, stamp2):
     return round(durationFrac, 2)
 
 def parseConfig():
-    global airports, dests, hpt, T, m, n, d
     with open("instanceConfig", "r") as f:
         for line in f:
             conf = json.loads(line)
@@ -45,31 +36,41 @@ def parseConfig():
                 d = int(conf[1])
             elif conf[0] == "T":
                 T = float(conf[1])
-
-def fileNames():
-    global instanceFile, m, n, d, T, propsFile
-    instanceFile = instanceFile + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(31)
-    propsFile = instanceFile + "_props"
+    return(m, n, d, T)
 
 def constructAirports(connecting, dests, hpt):
-    global airports
-    for a in connecting:
-        a.append("connecting")
-        airports.append(a)
-    for a in dests:
-        a.append("destination")
-        airports.append(a)
-    for a in hpt:
-        a.append("home_point")
-        airports.append(a)
+    airports = []
+    with open(instanceFile, "w") as f:
+        astats = ["airports", n]
+        json.dump(astats, f)
+        f.write("\n")
+        for a in connecting:
+            a.append("connecting")
+            airports.append(a)
+            json.dump(a, f)
+            f.write("\n")
+        for a in dests:
+            a.append("destination")
+            airports.append(a)
+            json.dump(a, f)
+            f.write("\n")
+        for a in hpt:
+            a.append("home_point")
+            airports.append(a)
+            json.dump(a, f)
+            f.write("\n")
+        json.dump(["holiday", T], f)
+        f.write("\n")
+        json.dump(["flights", m], f)
+        f.write("\n")
+    return airports
 
 def generateA():
-    global n, d, propsFile
     A = []
     connecting = []
     dests = []
     hpt = []
-    with open("airports_out", "r") as f:
+    with open(allairports, "r") as f:
         for line in f:
             airport = json.loads(line)
             A.append(airport)
@@ -94,11 +95,12 @@ def generateA():
         i = random.randint(0, len(connecting) - 1)
         f1.write(str(i) + "\n")
         hpt.append(connecting.pop(i))
-    constructAirports(connecting, dests, hpt)
+    airports = constructAirports(connecting, dests, hpt)
+    return airports
 
 def generateF(airports, T, file):
     airport_codes = [item[0] for item in airports]
-    with open("flightsCorpus", "r") as f:
+    with open(fcorpus, "r") as f:
         currentDate = 0
         earliestStamp = 0
         F = []
@@ -113,10 +115,8 @@ def generateF(airports, T, file):
                     F.append(flight)
     return F
 
-def takeFromFrandomM():
-    global m, instancePropsFile, airports, T, propsFile
+def takeFromFrandomM(F):
     counter = 0
-    F = generateF(airports, T, propsFile)
     with open(propsFile, "a") as f1, open(instanceFile, "a") as f2:
         f1.write("T " + str(T) + "\n")
         f1.write("flights " + str(m) + "\n")
@@ -129,22 +129,12 @@ def takeFromFrandomM():
             f2.write("\n")
             counter += 1
 
-parseConfig()
-fileNames()
-generateA()
+(m, n, d, T) = parseConfig()
+instanceFile = "instances/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(31)
+propsFile = instanceFile + "_props"
+fcorpus = "flightsCorpus"
+allairports = "airports_out"
 
-with open(instanceFile, "w") as f:
-    astats = []
-    astats.append("airports")
-    astats.append(n)
-    json.dump(astats, f)
-    f.write("\n")
-    for airport in airports:
-        json.dump(airport, f)
-        f.write("\n")
-    json.dump(["holiday", T], f)
-    f.write("\n")
-    json.dump(["flights", m], f)
-    f.write("\n")
-
-takeFromFrandomM()
+airports = generateA()
+F = generateF(airports, T, propsFile)
+takeFromFrandomM(F)
