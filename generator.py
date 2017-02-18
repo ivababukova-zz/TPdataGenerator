@@ -7,8 +7,7 @@ pp = pprint.PrettyPrinter(indent=4)
 
 airports = []
 instanceFile = "instances/"
-fFile = ""
-aFile = ""
+propsFile = ""
 T = 0
 m = 0
 n = 0
@@ -48,10 +47,9 @@ def parseConfig():
                 T = float(conf[1])
 
 def fileNames():
-    global instanceFile, m, n, d, T, aFile, fFile
+    global instanceFile, m, n, d, T, propsFile
     instanceFile = instanceFile + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(31)
-    aFile = instanceFile + "_aprops"
-    fFile = instanceFile + "_fprops"
+    propsFile = instanceFile + "_props"
 
 def constructAirports(connecting, dests, hpt):
     global airports
@@ -66,7 +64,7 @@ def constructAirports(connecting, dests, hpt):
         airports.append(a)
 
 def generateA():
-    global n, d
+    global n, d, propsFile
     A = []
     connecting = []
     dests = []
@@ -75,8 +73,8 @@ def generateA():
         for line in f:
             airport = json.loads(line)
             A.append(airport)
-    with open(aFile, "w") as f1:
-        f1.write("all\n")
+    with open(propsFile, "w") as f1:
+        f1.write("all " + str(n) + "\n")
         # choose n airports:
         while len(connecting) < n:
             i = random.randint(0, len(A) - 1)
@@ -85,7 +83,7 @@ def generateA():
             if a[1] == "1":
                 a[1] = "0.2" # if no conn time was calculated, put default
             connecting.append(a)
-        f1.write("destinations\n")
+        f1.write("destinations " + str(d) + "\n")
         # choose d destinations from the airports:
         while len(dests) < d:
             i = random.randint(0, len(connecting) - 1)
@@ -116,10 +114,12 @@ def generateF(airports, T, file):
     return F
 
 def takeFromFrandomM():
-    global m, instancePropsFile, airports, T, fFile
+    global m, instancePropsFile, airports, T, propsFile
     counter = 0
-    F = generateF(airports, T, fFile)
-    with open(fFile, "w") as f1, open(instanceFile, "a") as f2:
+    F = generateF(airports, T, propsFile)
+    with open(propsFile, "a") as f1, open(instanceFile, "a") as f2:
+        f1.write("T " + str(T) + "\n")
+        f1.write("flights " + str(m) + "\n")
         while counter < m and len(F) > 0:
             i = random.randint(0, len(F) - 1)
             f1.write(str(i) + "\n")

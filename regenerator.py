@@ -1,6 +1,5 @@
 # Given:
-#   - the instance config
-#   - the _aprops and _fprops files with the random numbers
+#   - the _props file with the random numbers
 #   - flights corpus
 #   - all airports
 # generates the same instance that was generated once by generator.py
@@ -15,14 +14,29 @@ pp = pprint.PrettyPrinter(indent=4)
 
 instanceName = sys.argv[1]
 
-config = "instanceConfig"
 fcorpus = "flightsCorpus"
 allairports = "airports_out"
-fprops = instanceName + "_fprops"
-aprops = instanceName + "_aprops"
+props = instanceName + "_props"
 regFile = instanceName + "_re"
 m = 0
+n = 0
+d = 0
 T = 0
+
+def getBasicParams():
+    global m, n, d, T
+    with open(props, "r") as f:
+        for line in f.readlines():
+            line = line.split()
+            if len(line) == 2:
+                if line[0] == "T":
+                    T = float(line[1])
+                elif line[0] == "all":
+                    n = int(line[1])
+                elif line[0] == "destinations":
+                    d = int(line[1])
+                elif line[0] == "flights":
+                    m = int(line[1])
 
 def hms_to_seconds(t):
     t = t.split(",")
@@ -41,16 +55,6 @@ def calculateDuration(stamp1, stamp2):
     durationFrac = duration / hms_to_seconds("24:00:00")
     return round(durationFrac, 2)
 
-def parseConfig():
-    global T, m, n, d
-    with open("instanceConfig", "r") as f:
-        for line in f:
-            conf = json.loads(line)
-            if conf[0] == "T":
-                T = float(conf[1])
-            if conf[0] == "m":
-                m = int(conf[1])
-
 def readAllAirports():
     global allairports
     A = []
@@ -67,10 +71,12 @@ def regenerateA():
     hpt = []
     turn = ""
     A = readAllAirports()
-    with open(aprops, "r") as f:
+    with open(props, "r") as f:
         for line in f.readlines():
             airport = line.split()
-            if airport[0] == "all" or airport[0] == "destinations" or airport[0] == "home":
+            if airport[0] == "T" or airport[0] == "flights":
+                turn = ""
+            elif airport[0] == "all" or airport[0] == "destinations" or airport[0] == "home":
                 turn = airport[0]
             elif turn == "all":
                 a = A.pop(int(airport[0]))
@@ -120,19 +126,24 @@ def generateF(airports, T):
 def takeFromF():
     F = generateF(A, T)
     counter = 0
-    with open(fprops, "r") as f1, open(regFile, "a") as f2:
+    with open(props, "r") as f1, open(regFile, "a") as f2:
         json.dump(["holiday", T], f2)
         f2.write("\n")
         json.dump(["flights", m], f2)
         f2.write("\n")
+        turn = ""
         for numb in f1.readlines():
-            counter += 1
-            numb = int(numb.split()[0])
-            flight = F.pop(numb)
-            flight.insert(0, counter)
-            json.dump(flight, f2)
-            f2.write("\n")
+            numb = numb.split()
+            if numb[0] == "flights":
+                turn = numb[0]
+            elif turn == "flights":
+                counter += 1
+                numb = int(numb[0])
+                flight = F.pop(numb)
+                flight.insert(0, counter)
+                json.dump(flight, f2)
+                f2.write("\n")
 
-parseConfig()
+getBasicParams()
 A = regenerateA()
 takeFromF()
