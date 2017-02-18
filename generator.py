@@ -2,10 +2,18 @@ import json
 import datetime
 import pprint
 import random
+import sys
+import os
 
 pp = pprint.PrettyPrinter(indent=4)
 
 # from which date do I take T to start? Implement when there is more data
+
+def removeFilename(f):
+    try:
+        os.remove(f)
+    except OSError:
+        pass
 
 def hms_to_seconds(t):
     t = t.split(",")
@@ -24,8 +32,8 @@ def calculateDuration(stamp1, stamp2):
     durationFrac = duration / hms_to_seconds("24:00:00")
     return round(durationFrac, 2)
 
-def parseConfig():
-    with open("instanceConfig", "r") as f:
+def parseConfig(config):
+    with open(config, "r") as f:
         for line in f:
             conf = json.loads(line)
             if conf[0] == "m":
@@ -98,7 +106,7 @@ def generateA():
     airports = constructAirports(connecting, dests, hpt)
     return airports
 
-def generateF(airports, T, file):
+def generateF(airports):
     airport_codes = [item[0] for item in airports]
     with open(fcorpus, "r") as f:
         currentDate = 0
@@ -129,12 +137,22 @@ def takeFromFrandomM(F):
             f2.write("\n")
             counter += 1
 
-(m, n, d, T) = parseConfig()
-instanceFile = "instances/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(31)
-propsFile = instanceFile + "_props"
-fcorpus = "flightsCorpus"
-allairports = "airports_out"
-
-airports = generateA()
-F = generateF(airports, T, propsFile)
-takeFromFrandomM(F)
+configFiles = sys.argv[1:]
+ids = 0
+numbOfFlights = 0
+for config in  configFiles:
+    (m, n, d, T) = parseConfig(config)
+    print(config, m, n, d, T)
+    while numbOfFlights < m:
+        instanceFile = "instances/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids)
+        propsFile = instanceFile + "_props"
+        removeFilename(instanceFile)
+        removeFilename(propsFile)
+        fcorpus = "flightsCorpus"
+        allairports = "airports_out"
+        airports = generateA()
+        F = generateF(airports)
+        numbOfFlights = len(F)
+    takeFromFrandomM(F)
+    ids += 1
+    numbOfFlights = 0
