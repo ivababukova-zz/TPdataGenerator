@@ -1,6 +1,5 @@
-from edge import *
-from node import *
-import scc
+from simpleEdge import *
+from simpleNode import *
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
@@ -11,25 +10,26 @@ pp = pprint.PrettyPrinter(indent=4)
     # list of connecting airports
 # all of which are nodes
 
-class Graph:
+class SimpleGraph:
     # create a graph for given lists of airports and flights:
     def __init__(self, flights, airports):
         self.alln = []
-        self.startn = []
         for airport in airports:
-            node = Node(airport[0], float(airport[1]), airport[2], [])
+            node = SimpleNode(airport[0], [])
             self.alln.append(node)
-            if airport[2] == "home_point":
-                self.startn.append(node)
 
         for flight in flights:
             dep = self.get_node(flight[3])
             arr = self.get_node(flight[4])
-            times = [float(flight[1]), float(flight[1]) + float(flight[2])]
             outgoing = dep.outgoing
             existing = False
-            edge = Edge(times, arr)
-            dep.add_edge(edge)
+            for e in outgoing:
+                if e.arr == arr:
+                    existing = True
+                    break
+            if not existing:
+                edge = SimpleEdge(arr)
+                dep.add_edge(edge)
 
     def get_node(self, airconntime):
         for node in self.alln:
@@ -41,25 +41,5 @@ class Graph:
         for node in self.alln:
             print("from ", node.aircode, " to:")
             for edge in node.outgoing:
-                print(edge.arr.aircode, edge.times, )
+                print(edge.arr.aircode)
             print("*****")
-
-
-flights = [
-[1, 1, 0.1, "SOF", "GLA", 62.15],
-[2, 0, 0.1, "GLA", "SOF", 44.4],
-[3, 2, 0.1, "GLA", "SOF", 79.21],
-[4, 4, 0.1, "EDI", "SOF", 21.59],
-[5, 3, 0.1, "EDI", "GLA", 50.88],
-[6, 5, 0.1, "EDI", "SOF", 190.04],
-[7, 6, 0.24, "SOF", "EDI", 59.59],
-[8, 7, 0.13, "EDI", "GLA", 41.38]
-]
-
-airports = [
-["SOF", "0.01", "destination"],
-["EDI", "0.01", "connecting"],
-["GLA", "0.01", "home_point"]]
-
-graph = Graph(flights, airports)
-scc.tarjan(graph)

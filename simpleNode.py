@@ -1,16 +1,15 @@
 from edge import *
 
-class Node:
+class SimpleNode:
 
-    def __init__(self, aircode, airconntime, purpose, outEdges):
+    def __init__(self, aircode, outEdges):
         self.aircode = aircode
-        self.airconntime = airconntime
         self.outgoing = outEdges
-        self.purpose = purpose
         # these are for the scc algorithm:
-        self.isVisited = False
-        self.order1 = None
-        self.order2 = None
+        self.visited = False
+        self.index = None
+        self.lowlink = None
+        self.onStack = False
 
     def add_edge(self, edge):
         self.outgoing.append(edge)
