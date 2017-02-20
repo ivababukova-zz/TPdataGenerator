@@ -4,10 +4,11 @@ import pprint
 import random
 import sys
 import os
+from graph import *
 
 pp = pprint.PrettyPrinter(indent=4)
 
-# from which date do I take T to start? Implement when there is more data
+# todo from which date do I take T to start? Implement when there is more data
 
 def removeFilename(f):
     try:
@@ -125,6 +126,7 @@ def generateF(airports):
 
 def takeFromFrandomM(F):
     counter = 0
+    randomF = []
     with open(propsFile, "a") as f1, open(instanceFile, "a") as f2:
         f1.write("T " + str(T) + "\n")
         f1.write("flights " + str(m) + "\n")
@@ -133,9 +135,11 @@ def takeFromFrandomM(F):
             f1.write(str(i) + "\n")
             f = F.pop(i)
             f.insert(0, counter + 1)
+            randomF.append(f)
             json.dump(f, f2)
             f2.write("\n")
             counter += 1
+    return randomF
 
 configFiles = sys.argv[1:]
 ids = 0
@@ -153,6 +157,8 @@ for config in  configFiles:
         airports = generateA()
         F = generateF(airports)
         numbOfFlights = len(F)
-    takeFromFrandomM(F)
+    flights = takeFromFrandomM(F)
+    graph = Graph(flights, airports)
+    graph.print_graph()
     ids += 1
     numbOfFlights = 0
