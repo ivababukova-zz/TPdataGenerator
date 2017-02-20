@@ -4,7 +4,8 @@ import pprint
 import random
 import sys
 import os
-from graph import *
+from simpleGraph import *
+import scc
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -144,21 +145,23 @@ def takeFromFrandomM(F):
 configFiles = sys.argv[1:]
 ids = 0
 numbOfFlights = 0
+areStronglyConnected = False
 for config in  configFiles:
     (m, n, d, T) = parseConfig(config)
     print(config, m, n, d, T)
-    while numbOfFlights < m:
-        instanceFile = "instances/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids)
-        propsFile = instanceFile + "_props"
+    while not areStronglyConnected:
+        while numbOfFlights < m:
+            instanceFile = "instances/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids)
+            propsFile = instanceFile + "_props"
+            fcorpus = "flightsCorpus"
+            allairports = "airports_out"
+            airports = generateA()
+            F = generateF(airports)
+            numbOfFlights = len(F)
         removeFilename(instanceFile)
         removeFilename(propsFile)
-        fcorpus = "flightsCorpus"
-        allairports = "airports_out"
-        airports = generateA()
-        F = generateF(airports)
-        numbOfFlights = len(F)
-    flights = takeFromFrandomM(F)
-    graph = Graph(flights, airports)
-    graph.print_graph()
+        flights = takeFromFrandomM(F)
+        graph = SimpleGraph(flights, airports)
+        areStronglyConnected = scc.tarjans(graph)
     ids += 1
     numbOfFlights = 0

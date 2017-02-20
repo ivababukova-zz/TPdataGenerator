@@ -15,7 +15,7 @@ class SimpleGraph:
     def __init__(self, flights, airports):
         self.alln = []
         for airport in airports:
-            node = SimpleNode(airport[0], [])
+            node = SimpleNode(airport[0], airport[2], [])
             self.alln.append(node)
 
         for flight in flights:

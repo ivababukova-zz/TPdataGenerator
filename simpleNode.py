@@ -2,9 +2,10 @@ from edge import *
 
 class SimpleNode:
 
-    def __init__(self, aircode, outEdges):
+    def __init__(self, aircode, purpose, outEdges):
         self.aircode = aircode
         self.outgoing = outEdges
+        self.purpose = purpose
         # these are for the scc algorithm:
         self.visited = False
         self.index = None
