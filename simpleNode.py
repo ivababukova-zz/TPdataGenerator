@@ -1,5 +1,3 @@
-from edge import *
-
 class SimpleNode:
 
     def __init__(self, aircode, purpose, outEdges):

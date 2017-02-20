@@ -125,32 +125,40 @@ def generateF(airports):
                     F.append(flight)
     return F
 
+def writeToFile(filename, items):
+    with open(filename, "a") as f:
+        for item in items:
+            json.dump(item, f)
+            f.write("\n")
+
 def takeFromFrandomM(F):
     counter = 0
     randomF = []
-    with open(propsFile, "a") as f1, open(instanceFile, "a") as f2:
-        f1.write("T " + str(T) + "\n")
-        f1.write("flights " + str(m) + "\n")
-        while counter < m and len(F) > 0:
-            i = random.randint(0, len(F) - 1)
-            f1.write(str(i) + "\n")
-            f = F.pop(i)
-            f.insert(0, counter + 1)
-            randomF.append(f)
-            json.dump(f, f2)
-            f2.write("\n")
-            counter += 1
-    return randomF
+    indices = []
+    indices.append(["T " + str(T)])
+    indices.append(["flights " + str(m)])
+    while counter < m and len(F) > 0:
+        i = random.randint(0, len(F) - 1)
+        indices.append(str(i))
+        f = F.pop(i)
+        f.insert(0, counter + 1)
+        randomF.append(f)
+        counter += 1
+    return (randomF, indices)
 
 configFiles = sys.argv[1:]
 ids = 0
 numbOfFlights = 0
 areStronglyConnected = False
+ccsFailCounter = 0 # records how many times the current set of airports with some set of flights weren't strongly connected
+
 for config in  configFiles:
     (m, n, d, T) = parseConfig(config)
     print(config, m, n, d, T)
     while not areStronglyConnected:
-        while numbOfFlights < m:
+        while numbOfFlights < m or ccsFailCounter > 10:
+            print("trying")
+            ccsFailCounter = 0
             instanceFile = "instances/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids)
             propsFile = instanceFile + "_props"
             fcorpus = "flightsCorpus"
@@ -158,10 +166,11 @@ for config in  configFiles:
             airports = generateA()
             F = generateF(airports)
             numbOfFlights = len(F)
-        removeFilename(instanceFile)
-        removeFilename(propsFile)
-        flights = takeFromFrandomM(F)
+        (flights, indices) = takeFromFrandomM(F)
         graph = SimpleGraph(flights, airports)
         areStronglyConnected = scc.tarjans(graph)
+        ccsFailCounter += 1
+    writeToFile(instanceFile, flights)
+    writeToFile(propsFile, indices)
     ids += 1
     numbOfFlights = 0

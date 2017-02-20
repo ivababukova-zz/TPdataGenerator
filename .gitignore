@@ -2,3 +2,4 @@ airports_out
 flightsCorpus
 instances/*
 configFiles/*
+__pycache__
