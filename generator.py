@@ -146,7 +146,8 @@ def takeFromFrandomM(F):
         counter += 1
     return (randomF, indices)
 
-configFiles = sys.argv[1:]
+instancesPerConfig = int(sys.argv[1])
+configFiles = sys.argv[2:]
 ids = 0
 numbOfFlights = 0
 areStronglyConnected = False
@@ -155,8 +156,9 @@ ccsFailCounter = 0 # records how many times the current set of airports with som
 for config in  configFiles:
     (m, n, d, T) = parseConfig(config)
     print(config, m, n, d, T)
-    while not areStronglyConnected:
-        while numbOfFlights < m or ccsFailCounter > 10:
+    while not areStronglyConnected or ids < instancesPerConfig:
+        ccsFailCounter += 1
+        while numbOfFlights < m or ccsFailCounter >= 10:
             print("trying")
             ccsFailCounter = 0
             instanceFile = "instances/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids)
@@ -167,10 +169,10 @@ for config in  configFiles:
             F = generateF(airports)
             numbOfFlights = len(F)
         (flights, indices) = takeFromFrandomM(F)
-        graph = SimpleGraph(flights, airports)
-        areStronglyConnected = scc.tarjans(graph)
-        ccsFailCounter += 1
-    writeToFile(instanceFile, flights)
-    writeToFile(propsFile, indices)
-    ids += 1
-    numbOfFlights = 0
+        areStronglyConnected = scc.tarjans(SimpleGraph(flights, airports))
+        if areStronglyConnected:
+            print("created instance ", instanceFile)
+            ids +=1
+            writeToFile(instanceFile, flights)
+            writeToFile(propsFile, indices)
+            numbOfFlights = 0

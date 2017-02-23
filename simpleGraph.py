@@ -4,11 +4,7 @@ from simpleNode import *
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
-# graph consists of:
-    # list of destinations
-    # home point
-    # list of connecting airports
-# all of which are nodes
+# graph consists of a list of nodes. Each airport is a node
 
 class SimpleGraph:
     # create a graph for given lists of airports and flights:

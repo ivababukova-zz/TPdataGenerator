@@ -1,3 +1,5 @@
+# node consists of name, purpose and a list of outgoing egdes. The rest props are for tarjan's
+
 class SimpleNode:
 
     def __init__(self, aircode, purpose, outEdges):
