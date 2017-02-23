@@ -13,7 +13,7 @@ def generateD(d):
     n = 2 * d
     T = (d + 1) * 3
     m = 10 * d
-    params = [["m", m], ["n", n], ["d", d], ["T", T]]
+    params = [["m, n, T are functions of d"], ["m", m], ["n", n], ["d", d], ["T", T]]
     writeToFile(params, configname)
 
 d = sys.argv[1]

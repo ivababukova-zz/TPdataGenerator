@@ -108,7 +108,18 @@ def generateA():
     airports = constructAirports(connecting, dests, hpt)
     return airports
 
+def randomTimeWindow(earliestStart, latestEnd):
+    earliestDate = datetime.datetime.fromtimestamp(earliestStart)
+    try:
+        latestDate = datetime.datetime.fromtimestamp(latestEnd) - datetime.timedelta(days=T)
+        randomStart = random.randint(earliestStart, latestDate.timestamp())
+    except ValueError:
+        print("Time between earliestStart and latestEnd is less than T")
+    print(randomStart, latestDate.timestamp())
+    return randomStart
+
 def generateF(airports):
+    startStamp = randomTimeWindow(1429178100, 1515757800) # type here the earliest and latest flight date in flightsCorpus
     airport_codes = [item[0] for item in airports]
     with open(fcorpus, "r") as f:
         currentDate = 0
@@ -116,7 +127,7 @@ def generateF(airports):
         F = []
         for line in f:
             flight = json.loads(line)
-            if flight[2] in airport_codes and flight[3] in airport_codes:
+            if flight[2] in airport_codes and flight[3] in airport_codes and flight[0] >= startStamp:
                 if earliestStamp == 0:
                     earliestStamp = flight[0]
                 currentDate = calculateDuration(earliestStamp, flight[0])
