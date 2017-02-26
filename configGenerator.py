@@ -8,13 +8,20 @@ def writeToFile(data, filename):
             f.write("\n")
 
 def generateD(d):
-    print(d)
-    configname = "configFiles/" + str(d)
+    configname = "configFiles/" + str(d) + "_D"
     n = 2 * d
     T = (d + 1) * 3
     m = 10 * d
     params = [["m, n, T are functions of d"], ["m", m], ["n", n], ["d", d], ["T", T]]
     writeToFile(params, configname)
 
+def generateD2(d):
+    configname = "configFiles/" + str(d) + "_D2"
+    n = 2 * d
+    T = (d + 1) * 3
+    m = 14 * d
+    params = [["m, n, T are functions of d"], ["m", m], ["n", n], ["d", d], ["T", T]]
+    writeToFile(params, configname)
+
 d = sys.argv[1]
-generateD(int(d))
+generateD2(int(d))

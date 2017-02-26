@@ -25,7 +25,9 @@ def getBasicParams():
                     d = int(line[1])
                 elif line[0] == "flights":
                     m = int(line[1])
-    return(m, n, d, T)
+                elif line[0] == "startStamp":
+                    startStamp = int(line[1])
+    return(m, n, d, T, startStamp)
 
 def hms_to_seconds(t):
     t = t.split(",")
@@ -95,15 +97,15 @@ def regenerateA():
             f.write("\n")
     return allairps
 
-def generateF(airports, T):
+def generateF(airports, T, startStamp):
     airport_codes = [item[0] for item in airports]
-    with open("flightsCorpus", "r") as f:
+    with open(fcorpus, "r") as f:
         currentDate = 0
         earliestStamp = 0
         F = []
         for line in f:
             flight = json.loads(line)
-            if flight[2] in airport_codes and flight[3] in airport_codes:
+            if flight[2] in airport_codes and flight[3] in airport_codes and flight[0] >= startStamp:
                 if earliestStamp == 0:
                     earliestStamp = flight[0]
                 currentDate = calculateDuration(earliestStamp, flight[0])
@@ -113,7 +115,7 @@ def generateF(airports, T):
     return F
 
 def takeFromF():
-    F = generateF(A, T)
+    F = generateF(A, T, startStamp)
     counter = 0
     with open(props, "r") as f1, open(regFile, "a") as f2:
         json.dump(["holiday", T], f2)
@@ -123,9 +125,9 @@ def takeFromF():
         turn = ""
         for numb in f1.readlines():
             numb = numb.split()
-            if numb[0] == "flights":
+            if numb[0] == "startStamp":
                 turn = numb[0]
-            elif turn == "flights":
+            elif turn == "startStamp":
                 counter += 1
                 numb = int(numb[0])
                 flight = F.pop(numb)
@@ -135,12 +137,12 @@ def takeFromF():
 
 instanceName = sys.argv[1]
 
-fcorpus = "flightsCorpus"
+fcorpus = sys.argv[2]
 allairports = "airports_out"
-props = instanceName + "_props"
-regFile = instanceName + "_re"
+props = "props/" + instanceName + "_props"
+regFile = "instances/" + instanceName
 
-(m, n, d, T) = getBasicParams()
+(m, n, d, T, startStamp) = getBasicParams()
 
 A = regenerateA()
 takeFromF()

@@ -1,5 +1,7 @@
 airports_out
 flightsCorpus
 instances/*
+testInstances/*
 configFiles/*
+props/*
 __pycache__

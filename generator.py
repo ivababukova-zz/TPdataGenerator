@@ -104,6 +104,8 @@ def generateA():
         f1.write("home\n")
         i = random.randint(0, len(connecting) - 1)
         f1.write(str(i) + "\n")
+        f1.write("T " + str(T) + "\n")
+        f1.write("flights " + str(m) + "\n")
         hpt.append(connecting.pop(i))
     airports = constructAirports(connecting, dests, hpt)
     return airports
@@ -115,11 +117,11 @@ def randomTimeWindow(earliestStart, latestEnd):
         randomStart = random.randint(earliestStart, latestDate.timestamp())
     except ValueError:
         print("Time between earliestStart and latestEnd is less than T")
-    print(randomStart, latestDate.timestamp())
     return randomStart
 
 def generateF(airports):
-    startStamp = randomTimeWindow(1429178100, 1515757800) # type here the earliest and latest flight date in flightsCorpus
+    global startStamp
+    startStamp = randomTimeWindow(1480550400, 1483228800) # type here the earliest and latest flight date in flightsCorpus
     airport_codes = [item[0] for item in airports]
     with open(fcorpus, "r") as f:
         currentDate = 0
@@ -132,6 +134,7 @@ def generateF(airports):
                     earliestStamp = flight[0]
                 currentDate = calculateDuration(earliestStamp, flight[0])
                 if currentDate + flight[1] <= T:
+                    print(flight[0], currentDate)
                     flight[0] = currentDate
                     F.append(flight)
     return F
@@ -146,23 +149,24 @@ def takeFromFrandomM(F):
     counter = 0
     randomF = []
     indices = []
-    indices.append(["T " + str(T)])
-    indices.append(["flights " + str(m)])
     while counter < m and len(F) > 0:
         i = random.randint(0, len(F) - 1)
-        indices.append(str(i))
+        indices.append(i)
         f = F.pop(i)
         f.insert(0, counter + 1)
         randomF.append(f)
         counter += 1
     return (randomF, indices)
 
-instancesPerConfig = int(sys.argv[1])
-configFiles = sys.argv[2:]
+# python generator.py <flights data filename> <number of instances per config> <congif files>
+fcorpus = sys.argv[1]
+instancesPerConfig = int(sys.argv[2])
+configFiles = sys.argv[3:]
 ids = 0
 numbOfFlights = 0
 areStronglyConnected = False
 ccsFailCounter = 0 # records how many times the current set of airports with some set of flights weren't strongly connected
+startStamp = 0
 
 for config in  configFiles:
     (m, n, d, T) = parseConfig(config)
@@ -173,8 +177,7 @@ for config in  configFiles:
             print("trying")
             ccsFailCounter = 0
             instanceFile = "instances/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids)
-            propsFile = instanceFile + "_props"
-            fcorpus = "flightsCorpus"
+            propsFile = "props/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids) + "_props"
             allairports = "airports_out"
             airports = generateA()
             F = generateF(airports)
@@ -185,5 +188,7 @@ for config in  configFiles:
             print("created instance ", instanceFile)
             ids +=1
             writeToFile(instanceFile, flights)
+            with open(propsFile, "a") as f:
+                f.write("startStamp: " + str(startStamp) + "\n")
             writeToFile(propsFile, indices)
             numbOfFlights = 0
