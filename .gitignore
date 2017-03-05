@@ -1,5 +1,4 @@
 airports_out
-flightsCorpus
 instances/*
 testInstances/*
 configFiles/*

@@ -9,8 +9,6 @@ import scc
 
 pp = pprint.PrettyPrinter(indent=4)
 
-# todo from which date do I take T to start? Implement when there is more data
-
 def removeFilename(f):
     try:
         os.remove(f)
@@ -33,20 +31,6 @@ def calculateDuration(stamp1, stamp2):
     duration = hms_to_seconds(str(datetime.timedelta(seconds=duration)))
     durationFrac = duration / hms_to_seconds("24:00:00")
     return round(durationFrac, 2)
-
-def parseConfig(config):
-    with open(config, "r") as f:
-        for line in f:
-            conf = json.loads(line)
-            if conf[0] == "m":
-                m = int(conf[1])
-            elif conf[0] == "n":
-                n = int(conf[1])
-            elif conf[0] == "d":
-                d = int(conf[1])
-            elif conf[0] == "T":
-                T = float(conf[1])
-    return(m, n, d, T)
 
 def constructAirports(connecting, dests, hpt):
     airports = []
@@ -121,7 +105,7 @@ def randomTimeWindow(earliestStart, latestEnd):
 
 def generateF(airports):
     global startStamp
-    startStamp = randomTimeWindow(1480550400, 1483228800) # type here the earliest and latest flight date in flightsCorpus
+    startStamp = randomTimeWindow(1477958400, 1483228800) # type here the earliest and latest flight date in flightsCorpus
     airport_codes = [item[0] for item in airports]
     with open(fcorpus, "r") as f:
         currentDate = 0
@@ -159,51 +143,57 @@ def takeFromFrandomM(F):
     return (randomF, indices)
 
 # python generator.py <flights data filename> <number of instances per config> <congif files>
-fcorpus = "/Users/ivababukova/uni/bookingData/decFlights" #sys.argv[1]
+fcorpus = "/Users/ivababukova/uni/bookingData/novDecFlights" #sys.argv[1]
 instancesPerConfig = 1 #int(sys.argv[2])
-configFiles = sys.argv[1:]
+config = sys.argv[1]
 ids = 0
 numbOfFlights = 0
 areStronglyConnected = False
 startStamp = 0
 ccsFailCounter = 0 # records how many times the current set of airports with some set of flights weren't strongly connected
 configFailCounter = 0
-configFailTolerance = 1000
+configFailTolerance = 10
 ccsFailTolerance = 15
 
-for config in  configFiles:
-    (m, n, d, T) = parseConfig(config)
-    while (not areStronglyConnected or ids < instancesPerConfig) and configFailCounter < configFailTolerance:
-        while (numbOfFlights < m or ccsFailCounter >= ccsFailTolerance) and configFailCounter < configFailTolerance:
-            if ccsFailCounter >= ccsFailTolerance:
-                ccsFailCounter = 0
-                configFailCounter += 1
-                print("Failed CCS test 10 times in a row")
-                print(configFailCounter)
-            elif ccsFailCounter < 10:
-                print("Not enough number of flights")
-            instanceFile = "instances/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids)
-            propsFile = "props/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids) + "_props"
-            allairports = "airports_out"
-            airports = generateA()
-            F = generateF(airports)
-            numbOfFlights = len(F)
-        (flights, indices) = takeFromFrandomM(F)
-        areStronglyConnected = scc.tarjans(SimpleGraph(flights, airports))
-        if not areStronglyConnected:
-            ccsFailCounter += 1
-        if areStronglyConnected:
-            print("created instance ", instanceFile)
-            ids +=1
-            writeToFile(instanceFile, flights)
-            with open(propsFile, "a") as f:
-                f.write("startStamp: " + str(startStamp) + "\n")
-            writeToFile(propsFile, indices)
+with open(config, "r") as f:
+    for line in f:
+        params = json.loads(line)
+        m = params[0]
+        n = params[1]
+        d = params[2]
+        T = params[3]
+        print(m, n, d, T)
+        while (not areStronglyConnected or ids < instancesPerConfig) and configFailCounter < configFailTolerance:
+            while (numbOfFlights < m or ccsFailCounter >= ccsFailTolerance) and configFailCounter < configFailTolerance:
+                if ccsFailCounter >= ccsFailTolerance:
+                    ccsFailCounter = 0
+                    configFailCounter += 1
+                    print("Failed CCS test 10 times in a row")
+                    print(configFailCounter)
+                elif ccsFailCounter < 10:
+                    print("Not enough number of flights")
+                instanceFile = "instances/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids)
+                propsFile = "props/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids) + "_props"
+                allairports = "airports_out"
+                airports = generateA()
+                F = generateF(airports)
+                numbOfFlights = len(F)
+            (flights, indices) = takeFromFrandomM(F)
+            areStronglyConnected = scc.tarjans(SimpleGraph(flights, airports))
+            if not areStronglyConnected:
+                ccsFailCounter += 1
+            if areStronglyConnected:
+                print("created instance ", instanceFile)
+                ids +=1
+                writeToFile(instanceFile, flights)
+                with open(propsFile, "a") as f:
+                    f.write("startStamp: " + str(startStamp) + "\n")
+                writeToFile(propsFile, indices)
+                numbOfFlights = 0
+        if configFailCounter >= configFailTolerance:
+            print("Instance could not be created for these settings: ", m, n, d, T)
+            configFailCounter = 0
             numbOfFlights = 0
-    if configFailCounter >= configFailTolerance:
-        print("Instance could not be created for this config file: ", config, m, n, d, T)
-        configFailCounter = 0
-        numbOfFlights = 0
-        ccsFailCounter = 0
-        removeFilename(instanceFile)
-        removeFilename(propsFile)
+            ccsFailCounter = 0
+            removeFilename(instanceFile)
+            removeFilename(propsFile)

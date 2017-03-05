@@ -11,34 +11,45 @@ def writeToFile(data, filename):
             json.dump(line, f)
             f.write("\n")
 
-def generateD(d):
-    configname = "configFiles/" + str(d) + "_D"
+def generateD(configname, d):
     n = 2 * d
     T = (d + 1) * 3
     m = 10 * d
-    params = [["m, n, T are functions of d"], ["m", m], ["n", n], ["d", d], ["T", T]]
+    params = [[m, n, d, T]]
     writeToFile(params, configname)
 
-def generateD2(d):
-    configname = "configFiles/" + str(d) + "_D2"
+def generateD2(configname, d):
     n = 2 * d
     T = (d + 1) * 3
     m = 14 * d
-    params = [["m, n, T are functions of d"], ["m", m], ["n", n], ["d", d], ["T", T]]
+    params = [[m, n, d, T]]
     writeToFile(params, configname)
 
 # generates m, n, d, T by a Monte Carlo simulation.
-def monteCarlo():
-    maxT = 31
-    m = random.randint(20, 500)
-    print(m)
-    n = random.randint(2, 100)
-    print(n)
-    d = random.randint(1, maxT)
-    print(d)
-    T = random.randint(d, maxT)
-    print(T)
-# d = sys.argv[1]
-# generateD(int(d))
+def monteCarlo(configname, configNumb):
+    configs = []
+    for i in range(0, configNumb):
+        maxT = 61
+        maxN = 100
+        maxM = 500
+        maxD = maxT
+        m = random.randint(20, maxM)
+        if m < maxN:
+            maxN = m
+        n = random.randint(2, maxN)
+        if n < maxT:
+            maxD = n
+        d = random.randint(1, maxD)
+        T = random.randint(d, maxT)
+        configs.append([m, n, d, T])
+    writeToFile(configs, configname)
 
-monteCarlo()
+func = sys.argv[1]
+configname = sys.argv[2]
+param = sys.argv[3]
+
+possibles = globals().copy()
+possibles.update(locals())
+method = possibles.get(func)
+
+method(configname, int(param))
