@@ -6,6 +6,8 @@ import sys
 import os
 from simpleGraph import *
 import scc
+from numpy.random import choice
+from copy import deepcopy
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -92,7 +94,7 @@ def generateA():
         f1.write("flights " + str(m) + "\n")
         hpt.append(connecting.pop(i))
     airports = constructAirports(connecting, dests, hpt)
-    return airports
+    return (airports, dests, hpt)
 
 def randomTimeWindow(earliestStart, latestEnd):
     earliestDate = datetime.datetime.fromtimestamp(earliestStart)
@@ -142,6 +144,105 @@ def takeFromFrandomM(F):
         counter += 1
     return (randomF, indices)
 
+def separateFlights(destsCodes, F):
+    fwithonedest = []
+    fwithbothdests = []
+    fwithoutdests = []
+    choices = []
+    destsCodes = [d[0] for d in dests]
+    for f in F:
+        f1 = deepcopy(f)
+        if f1[2] in destsCodes and f1[3] in destsCodes:
+            fwithbothdests.append(f1)
+        elif f1[2] in destsCodes or f1[3] in destsCodes:
+            fwithonedest.append(f1)
+        else:
+            fwithoutdests.append(f1)
+    if len(fwithbothdests) > 0:
+        choices.append(1)
+    if len(fwithonedest) > 0:
+        choices.append(2)
+    if len(fwithoutdests) > 0:
+        choices.append(3)
+    return (fwithbothdests, fwithonedest, fwithoutdests, choices)
+
+def reweight(probabilites):
+    weightGap = 1 - sum(probabilites)
+    if weightGap != 1:
+        toadd = weightGap / len(probabilites)
+        newprobabilites = []
+        for prob in probabilites:
+            newprob = toadd + prob
+            newprobabilites.append(newprob)
+        return newprobabilites
+    else:
+        return probabilites
+
+def shareProbability(choices):
+    idealProbab = {"1": 0.5, "2": 0.30, "3": 0.20}
+    probabilities = []
+    for choice in choices:
+        probab = idealProbab[str(choice)]
+        probabilities.append(probab)
+    if sum(probabilities) != 1:
+        probabilities = reweight(probabilities)
+    return probabilities
+
+def removeProbab(probabilities, missingChoice, choices):
+    if missingChoice == 1:
+        probabilities.pop(0)
+    elif missingChoice == 2:
+        if 1 not in choices:
+            probabilities.pop(0)
+        else:
+            probabilities.pop(1)
+    elif missingChoice == 3:
+        if 1 not in choices and 2 in choices:
+            probabilities.pop(1)
+        elif 1 not in choices and 2 not in choices:
+            probabilities.pop(0)
+        elif 1 in choices and 2 in choices:
+            probabilities.pop(2)
+    return reweight(probabilities)
+
+def takeFromFrandomMProbability(F, dests, hpt):
+    counter = 0
+    randomF = []
+    indices = []
+    destsCodes = [d[0] for d in dests]
+    destsCodes.append(hpt[0])
+    print(destsCodes)
+    (fwithbothdests, fwithonedest, fwithoutdests, choices) = separateFlights(destsCodes, F)
+
+    probabDistr = shareProbability(choices)
+    while counter < m and len(choices) > 0:
+        print(probabDistr)
+        listChoice = choice(choices, 1, p=probabDistr)
+        if listChoice == 1:
+            i = random.randint(0, len(fwithbothdests) - 1)
+            f = fwithbothdests.pop(i)
+            if len(fwithbothdests) == 0:
+                choices.remove(1)
+                probabDistr = removeProbab(probabDistr, 1, choices)
+        elif listChoice == 2:
+            i = random.randint(0, len(fwithonedest) - 1)
+            f = fwithonedest.pop(i)
+            if len(fwithonedest) == 0:
+                choices.remove(2)
+                probabDistr = removeProbab(probabDistr, 2, choices)
+        elif listChoice == 3:
+            i = random.randint(0, len(fwithoutdests) - 1)
+            f = fwithoutdests.pop(i)
+            if len(fwithoutdests) == 0:
+                choices.remove(3)
+                probabDistr = removeProbab(probabDistr, 3, choices)
+        indices.append(i)
+        f.insert(0, counter + 1)
+        randomF.append(f)
+        counter += 1
+    print("exiting")
+    return (randomF, indices)
+
 # python generator.py <flights data filename> <number of instances per config> <congif files>
 fcorpus = "/Users/ivababukova/uni/bookingData/novDecFlights" #sys.argv[1]
 instancesPerConfig = 1 #int(sys.argv[2])
@@ -152,7 +253,7 @@ areStronglyConnected = False
 startStamp = 0
 ccsFailCounter = 0 # records how many times the current set of airports with some set of flights weren't strongly connected
 configFailCounter = 0
-configFailTolerance = 10
+configFailTolerance = 1000
 ccsFailTolerance = 15
 
 with open(config, "r") as f:
@@ -172,13 +273,13 @@ with open(config, "r") as f:
                     print(configFailCounter)
                 elif ccsFailCounter < 10:
                     print("Not enough number of flights")
-                instanceFile = "instances/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids)
+                instanceFile = "testsMonteCarlo/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids)
                 propsFile = "props/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids) + "_props"
                 allairports = "airports_out"
-                airports = generateA()
+                airports, dests, hpt = generateA()
                 F = generateF(airports)
                 numbOfFlights = len(F)
-            (flights, indices) = takeFromFrandomM(F)
+            (flights, indices) = takeFromFrandomMProbability(F, dests, hpt[0])
             areStronglyConnected = scc.tarjans(SimpleGraph(flights, airports))
             if not areStronglyConnected:
                 ccsFailCounter += 1
