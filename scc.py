@@ -29,7 +29,7 @@ def strongconnect(v, indx, S, graph, CCs):
 
 def hasSolutions(graph, CCs):
     mustbevisited = set([a.aircode for a in graph.alln if a.purpose == "home_point" or a.purpose == "destination"])
-    pp.pprint(mustbevisited)
+    # pp.pprint(mustbevisited)
     for cc in CCs:
         if mustbevisited.issubset(set(cc)):
             return True
@@ -45,5 +45,5 @@ def tarjans(graph):
             strongconnect(v, indx, S, graph, CCs)
     if len(S) > 0:
         CCs.append(S[:])
-    pp.pprint(CCs)
+    # pp.pprint(CCs)
     return hasSolutions(graph, CCs)

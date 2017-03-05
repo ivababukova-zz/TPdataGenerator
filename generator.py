@@ -134,7 +134,7 @@ def generateF(airports):
                     earliestStamp = flight[0]
                 currentDate = calculateDuration(earliestStamp, flight[0])
                 if currentDate + flight[1] <= T:
-                    print(flight[0], currentDate)
+                    # print(flight[0], currentDate)
                     flight[0] = currentDate
                     F.append(flight)
     return F
@@ -159,23 +159,29 @@ def takeFromFrandomM(F):
     return (randomF, indices)
 
 # python generator.py <flights data filename> <number of instances per config> <congif files>
-fcorpus = sys.argv[1]
-instancesPerConfig = int(sys.argv[2])
-configFiles = sys.argv[3:]
+fcorpus = "/Users/ivababukova/uni/bookingData/decFlights" #sys.argv[1]
+instancesPerConfig = 1 #int(sys.argv[2])
+configFiles = sys.argv[1:]
 ids = 0
 numbOfFlights = 0
 areStronglyConnected = False
-ccsFailCounter = 0 # records how many times the current set of airports with some set of flights weren't strongly connected
 startStamp = 0
+ccsFailCounter = 0 # records how many times the current set of airports with some set of flights weren't strongly connected
+configFailCounter = 0
+configFailTolerance = 1000
+ccsFailTolerance = 15
 
 for config in  configFiles:
     (m, n, d, T) = parseConfig(config)
-    print(config, m, n, d, T)
-    while not areStronglyConnected or ids < instancesPerConfig:
-        ccsFailCounter += 1
-        while numbOfFlights < m or ccsFailCounter >= 10:
-            print("trying")
-            ccsFailCounter = 0
+    while (not areStronglyConnected or ids < instancesPerConfig) and configFailCounter < configFailTolerance:
+        while (numbOfFlights < m or ccsFailCounter >= ccsFailTolerance) and configFailCounter < configFailTolerance:
+            if ccsFailCounter >= ccsFailTolerance:
+                ccsFailCounter = 0
+                configFailCounter += 1
+                print("Failed CCS test 10 times in a row")
+                print(configFailCounter)
+            elif ccsFailCounter < 10:
+                print("Not enough number of flights")
             instanceFile = "instances/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids)
             propsFile = "props/" + str(m) + "_" + str(n) + "_" + str(d) + "_" + str(int(T)) + "_" + str(ids) + "_props"
             allairports = "airports_out"
@@ -184,6 +190,8 @@ for config in  configFiles:
             numbOfFlights = len(F)
         (flights, indices) = takeFromFrandomM(F)
         areStronglyConnected = scc.tarjans(SimpleGraph(flights, airports))
+        if not areStronglyConnected:
+            ccsFailCounter += 1
         if areStronglyConnected:
             print("created instance ", instanceFile)
             ids +=1
@@ -192,3 +200,10 @@ for config in  configFiles:
                 f.write("startStamp: " + str(startStamp) + "\n")
             writeToFile(propsFile, indices)
             numbOfFlights = 0
+    if configFailCounter >= configFailTolerance:
+        print("Instance could not be created for this config file: ", config, m, n, d, T)
+        configFailCounter = 0
+        numbOfFlights = 0
+        ccsFailCounter = 0
+        removeFilename(instanceFile)
+        removeFilename(propsFile)

@@ -4,4 +4,8 @@ instances/*
 testInstances/*
 configFiles/*
 props/*
+big/*
 __pycache__
+tests3march/*
+testInstance/*
+tp.log
